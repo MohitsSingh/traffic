@@ -6,9 +6,9 @@
 tic
 rng(239487)
 disp('Setting parameters...')
-ndrivers=20; % Number of drivers
-tracklength=100; % Track length in meters
-maxtime=200; % Number of seconds to simulate
+ndrivers=3; % Number of drivers
+tracklength=1000; % Track length in meters
+maxtime=10; % Number of seconds to simulate
 dt=0.05; % Timestep size in seconds
 npts=maxtime/dt;
 time=dt:dt:maxtime;
@@ -21,12 +21,13 @@ C(4)=C(1)*0.913;
 alpha=0.5;
 randvel=1;
 randpos=1;
-doplot=0;
+doplot=1;
+ncollisions=0;
 
 vtilda=@(headway) max(0,C(1)*tanh(C(2)*headway+C(3))+C(4));
 
 dx=0.1;
-vtildatable=alpha*dt*vtilda(0:dx:200);
+vtildatable=alpha*dt*vtilda(0:dx:tracklength);
 
 
 %% Set up initial conditions
@@ -38,6 +39,7 @@ for d=1:ndrivers
     drivers(d).state=0; % Alert vs. fucked
     drivers(d).headway=Inf; % Amount of distance to car in front
     drivers(d).infront=mod(d,ndrivers)+1; % Index of driver in front
+    drivers(d).behind=mod(d-2,ndrivers)+1; % Index of driver behind
 end
 
 
@@ -61,17 +63,25 @@ for t=1:npts
             drivers(d).v=(1-alpha*dt)*drivers(d).v+vtildatable(round(drivers(d).headway/dx)+1);
         end
         
+        % Check if collision occurred
+        if drivers(d).x>drivers((drivers(d).infront)).x || drivers(d).x<drivers((drivers(d).behind)).x
+            ncollisions=ncollisions+1;
+            keyboard
+        end
+        
         drivers(d).v=drivers(d).v+drivers(d).a; % Update velocity
         drivers(d).x=mod(drivers(d).x+drivers(d).v*dt,tracklength); % Update position
     end
     if ~mod(t,round(npts/100)), fprintf('  %i%%\n',round(t/npts*100)); end
 end
+toc
+fprintf('Number of collisions: %i\n',ncollisions)
 
 
 if doplot==1
     figure('position',[200 200 1600 800])
     radius=tracklength/(2*pi);
-    toc
+    
     
     %% Plot other quantities
     cksubplot([2 3],[2 1],[70 70],[0 0],[3 -5])
@@ -86,7 +96,7 @@ if doplot==1
     grass=[0.2 0.9 0.4];
     bitumen=0.7*[1 1 1];
     trackwidth=2.5; % Width of track
-    axislims=1.1*radius*[-1 1];
+    axislims=1.2*radius*[-1 1];
     fill(axislims(1)*[-1 1 1 -1],axislims(1)*[-1 -1 1 1],grass)
     phi = (0:0.01:1)'*2*pi;
     xouter = (radius+trackwidth)*sin(phi);
