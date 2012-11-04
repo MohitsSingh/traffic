@@ -11,15 +11,22 @@ maxtime=20; % Number of seconds to simulate
 dt=0.1; % Timestep size in seconds
 npts=maxtime/dt;
 defaultv=30; % Default velocity in m/s
-tau=round(0.3/dt);
+tau=round(0.3/dt); % Reaction time
+C(1)=16.8; % 
+C(2)=0.086;
+C(3)=C(2)*-25;
+C(4)=0.913;
+alpha=0.5;
+
+vtilda=@(headway) max(0,C(1)*tanh(C(2)*headway+C(3))+C(4));
 
 
 %% Set up initial conditions
 drivers=struct;
 for d=1:ndrivers
     drivers(d).x=(d/ndrivers)*tracklength; % Initial position
-    drivers(d).v=defaultv+10*randn; % Initial velocity
-    drivers(d).a=0.1; % Initial acceleration
+    drivers(d).v=0;% defaultv+5*randn; % Initial velocity
+    drivers(d).a=0; % Initial acceleration
     drivers(d).state=0; % Alert vs. fucked
     drivers(d).headway=Inf; % Amount of distance to car in front
     drivers(d).infront=mod(d,ndrivers)+1; % Index of driver in front
@@ -28,13 +35,16 @@ end
 
 %% Run simulation
 positions=zeros(ndrivers,npts);
+velocities=zeros(ndrivers,npts);
 for t=1:npts
     for d=1:ndrivers
         positions(d,t)=drivers(d).x; % Save current position
+        velocities(d,t)=drivers(d).v; % Save current position
         
         drivers(d).state=0; % Update state
-        if t>tau
+        if t>tau % Update acceleration
             drivers(d).headway=diff(positions([d drivers(d).infront],t-tau));
+            drivers(d).v=drivers(d).v+alpha*dt*(-drivers(d).v+vtilda(drivers(d).headway));
         end
         
         drivers(d).v=drivers(d).v+drivers(d).a; % Update velocity
@@ -46,6 +56,7 @@ end
 figure('position',[200 200 800 800]); hold on
 radius=tracklength/(2*pi);
 toc
+
 
 %% Plot track
 grass=[0.2 0.9 0.4];
@@ -65,8 +76,6 @@ ymid = (radius)*cos(phi);
 plot(xmid,ymid,'w--')
 
 
-
-
 %% Plot cars
 for t=1:npts
     current=positions(:,t);
@@ -80,7 +89,7 @@ for t=1:npts
     xlim(axislims)
     ylim(axislims)
     drawnow
-    pause(dt)
+%     pause(dt)
     if t<npts, delete(q), end
 end
 
