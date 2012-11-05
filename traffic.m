@@ -30,7 +30,6 @@ doplot=1; % Toggle whether to plot
 ncollisions=0; % Initialize number of collisions
 
 %% Define Optimal Velocity function, vtilda
-
 vtilda=@(perceivedhead) max(0,C(1)*tanh(C(2)*perceivedhead+C(3))+C(4)); % Taken from paper
 
 dx=0.1; % Spatial step for calculating look-up table
@@ -86,8 +85,6 @@ for t=1:npts
             %drivers(d).state=0; % Update state
             if drivers(d).state == 0,
                 drivers(d).perceivedhead=mod(diff(positions([d drivers(d).infront],t-tau)),tracklength); % Update perceived headway if driver is alert
-            else
-                drivers(d).perceivedhead = perceivedheads(d,t-1); % Use previous headway if driver is no longer alert
             end
             drivers(d).v=(1-alpha*dt)*drivers(d).v+vtildatable(round(drivers(d).perceivedhead/dx)+1); % Update velocity as a function of perceived headway
         end
@@ -177,8 +174,11 @@ if doplot==1
     for t=1:npts
         set(gcf,'currentaxes',h)
         current=positions(:,t);
+        
         x=radius*cos(2*pi*current/tracklength);
         y=radius*sin(2*pi*current/tracklength);
+        alertness=logical(states(:,t)); % Show alertness
+        w=scatter(x(alertness),y(alertness),100,paint(alertness,:),'filled','y');
         q=scatter(x,y,25,paint,'filled');
         boom=logical(collisions(:,t)); % Show collisions
         z=scatter(x(boom),y(boom),100,'r','filled');
@@ -190,7 +190,7 @@ if doplot==1
         ylim(axislims)
         drawnow
 %         pause(dt) % Choose rate of animation
-        if t<npts, delete(q), delete(z), end % Remove points to update
+        if t<npts, delete(q), delete(w), delete(z), end % Remove points to update
     end
 end
 
