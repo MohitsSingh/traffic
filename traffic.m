@@ -73,6 +73,16 @@ switch whichmodel
         
     %% Generalized Force Model
     case 4
+        alpha=1/2.45; % Responsivity rate in /s
+        v0=16.98; % ?? Maximum velocity ish?
+        d=1.38; % Minimum vehicle distance in m
+        T=0.74; % ?? Thingie in s
+        tauprime=0.77; % ?? Thingie in s
+        R=5.59; % ?? in m
+        Rprime=98.78; % ?? in m
+        
+        
+        
         
     %% Underwood Model
     case 5
