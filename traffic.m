@@ -19,10 +19,10 @@ npts=maxtime/dt;
 time=dt:dt:maxtime;
 
 % Model parameters
-whichmodel=2;
+whichmodel=5;
 usestates=0;
 ndrivers=6; % Number of drivers
-tracklength=165; % Track length in meters
+tracklength=100; % Track length in meters
 defaultv=20; % Default velocity in m/s
 tau=round(0.5/dt); % Reaction time (in number of timesteps)
 randvel=10; % Randomness in initial velocity in m/s
@@ -54,8 +54,7 @@ switch whichmodel
         vmax=C(1)+C(4);
         alpha=0.5; % Responsivity of drivers
         % Define optimal velocity function
-        ovf=@(perceivedhead) max(0,C(1)*tanh(C(2)*perceivedhead+C(3))+C(4)); % Taken from paper
-        ovftable=alpha*dt*ovf(0:dx:tracklength); % Create look-up table for vtilda
+        dvdt=@(perceivedhead,velocity) alpha*dt*(max(0,C(1)*tanh(C(2)*perceivedhead+C(3))+C(4))-velocity); % Taken from paper
 
     
     %% Orosz Model
@@ -65,8 +64,7 @@ switch whichmodel
         vmax=32;
         alpha=0.5; % Responsivity of drivers
         % Define optimal velocity function
-        ovf=@(perceivedhead) max(0,vmax*(perceivedhead/hstop - 1).^3./(1 + (perceivedhead/hstop - 1).^3));
-        ovftable=alpha*dt*ovf(0:dx:tracklength); % Create look-up table for vtilda
+        dvdt=@(perceivedhead,velocity) alpha*dt*(max(0,vmax*(perceivedhead/hstop - 1).^3./(1 + (perceivedhead/hstop - 1).^3))-velocity);
         
     %% Human Driver Model
     case 3
@@ -89,8 +87,7 @@ switch whichmodel
         vmax=24.40; % Maximum velocity in m/s
         hm=12.92; % Headway inflection point in m
         alpha=0.88; % Responsivity in /s
-        ovf=@(perceivedhead) vmax*exp(-2*hm./perceivedhead);
-        ovftable=alpha*dt*ovf(0:dx:tracklength); % Create look-up table for vtilda
+        dvdt=@(perceivedhead,velocity) alpha*dt*(vmax*exp(-2*hm./perceivedhead)-velocity);
     
     otherwise
         error('OMG 4 options and you still can''t decide. laaame.')
@@ -126,7 +123,6 @@ collisions=matrix;
 % Solve difference equations across all time points
 for t=1:npts
     
-    
     % Solve motion of each driver at timepoint 'd'
     for d=1:ndrivers
         if t>tau % Update velocity
@@ -145,11 +141,10 @@ for t=1:npts
                 end
             end
             
-            %drivers(d).state=0; % Update state
             if drivers(d).state == 0,
                 drivers(d).perceivedhead=mod(diff(positions([d drivers(d).infront],t-tau)),tracklength); % Update perceived headway if driver is alert
             end
-            drivers(d).v=(1-alpha*dt)*drivers(d).v+ovftable(round(drivers(d).perceivedhead/dx)+1); % Update velocity as a function of perceived headway
+            drivers(d).v=drivers(d).v+dvdt(drivers(d).perceivedhead,drivers(d).v); % Update velocity as a function of perceived headway
         end
         drivers(d).x=mod(drivers(d).x+drivers(d).v*dt,tracklength); % Update position
         
