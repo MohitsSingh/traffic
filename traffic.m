@@ -147,7 +147,7 @@ for t=1:npts
             
             if drivers(d).state == 0,
                 drivers(d).perchead=mod(diff(positions([d drivers(d).infront],t-tau)),tracklength); % Update perceived headway if driver is alert
-                drivers(d).percvdiff=diff(velocities([d drivers(d).infront],t-tau)); % Update perceived velocity difference if driver is alert
+                drivers(d).percvdiff=diff(velocities([drivers(d).infront d],t-tau)); % Update perceived velocity difference if driver is alert
             end
             drivers(d).v=drivers(d).v+dvdt(drivers(d).perchead,drivers(d).v,drivers(d).percvdiff); % Update velocity as a function of perceived headway
         end
