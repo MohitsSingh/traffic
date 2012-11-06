@@ -19,10 +19,10 @@ npts=maxtime/dt;
 time=dt:dt:maxtime;
 
 % Model parameters
-whichmodel=5;
+whichmodel=2;
 usestates=0;
 ndrivers=6; % Number of drivers
-tracklength=100; % Track length in meters
+tracklength=165; % Track length in meters
 defaultv=20; % Default velocity in m/s
 tau=round(0.5/dt); % Reaction time (in number of timesteps)
 randvel=10; % Randomness in initial velocity in m/s
@@ -61,13 +61,12 @@ switch whichmodel
     %% Orosz Model
     case 2
         % Set parameters
-        C(1)=16.8;
-        C(2)=0.086;
-        C(3)=C(2)*-25;
-        C(4)=C(1)*0.913;
+        hstop=7;
+        vmax=32;
         alpha=0.5; % Responsivity of drivers
         % Define optimal velocity function
-        ovf=@(perceivedhead) max(0,C(1)*tanh(C(2)*perceivedhead+C(3))+C(4)); % Taken from paper
+        ovf=@(perceivedhead) max(0,vmax*(perceivedhead/hstop - 1).^3./(1 + (perceivedhead/hstop - 1).^3));
+        ovftable=alpha*dt*ovf(0:dx:tracklength); % Create look-up table for vtilda
         
     %% Human Driver Model
     case 3
