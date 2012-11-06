@@ -5,35 +5,89 @@
 %% Parameters and settings
 
 tic
-rng(239487) % Random number seed
 disp('Setting parameters...')
-ndrivers=6; % Number of drivers
-tracklength=300; % Track length in meters
+% General code stuff
+rng(239487) % Random number seed
+doplot=1; % Toggle whether to plot
+
+% Boring initialization stuff
+ncollisions=0; % Initialize number of collisions
 maxtime=40; % Number of seconds to simulate
+dx=0.1; % Spatial step for calculating look-up table
 dt=0.1; % Timestep size in seconds
 npts=maxtime/dt;
 time=dt:dt:maxtime;
+
+% Model parameters
+whichmodel=5;
+usestates=0;
+ndrivers=6; % Number of drivers
+tracklength=100; % Track length in meters
 defaultv=20; % Default velocity in m/s
 tau=round(0.5/dt); % Reaction time (in number of timesteps)
-C(1)=16.8;
-C(2)=0.086;
-C(3)=C(2)*-25;
-C(4)=C(1)*0.913;
-alpha=0.5; % Responsivity of drivers
 randvel=10; % Randomness in initial velocity in m/s
-randpos=20; % Randomness in initial positions in m
+randpos=0; % Randomness in initial positions in m
 
-psleep = 0.1; % Probability of losing alertness
-pwake =  0.1; % Probability of regaining alertness
 
-doplot=1; % Toggle whether to plot
-ncollisions=0; % Initialize number of collisions
 
-%% Define Optimal Velocity function, vtilda
-vtilda=@(perceivedhead) max(0,C(1)*tanh(C(2)*perceivedhead+C(3))+C(4)); % Taken from paper
+%% Markov process parameters
+if usestates==1
+    psleep = 0.1; % Probability of losing alertness
+    pwake =  0.1; % Probability of regaining alertness
+else
+    psleep = 0;
+    pwake = 1;
+end
 
-dx=0.1; % Spatial step for calculating look-up table
-vtildatable=alpha*dt*vtilda(0:dx:tracklength); % Create look-up table for vtilda
+
+
+%% Define traffic model
+switch whichmodel
+    
+    %% Bando 98 Model
+    case 1
+        % Set parameters
+        C(1)=16.8;
+        C(2)=0.086;
+        C(3)=C(2)*-25;
+        C(4)=C(1)*0.913;
+        vmax=C(1)+C(4);
+        alpha=0.5; % Responsivity of drivers
+        % Define optimal velocity function
+        ovf=@(perceivedhead) max(0,C(1)*tanh(C(2)*perceivedhead+C(3))+C(4)); % Taken from paper
+        ovftable=alpha*dt*ovf(0:dx:tracklength); % Create look-up table for vtilda
+
+    
+    %% Orosz Model
+    case 2
+        % Set parameters
+        C(1)=16.8;
+        C(2)=0.086;
+        C(3)=C(2)*-25;
+        C(4)=C(1)*0.913;
+        alpha=0.5; % Responsivity of drivers
+        % Define optimal velocity function
+        ovf=@(perceivedhead) max(0,C(1)*tanh(C(2)*perceivedhead+C(3))+C(4)); % Taken from paper
+        
+    %% Human Driver Model
+    case 3
+        
+    %% Generalized Force Model
+    case 4
+        
+    %% Underwood Model
+    case 5
+        vmax=24.40; % Maximum velocity in m/s
+        hm=12.92; % Headway inflection point in m
+        alpha=0.88; % Responsivity in /s
+        ovf=@(perceivedhead) vmax*exp(-2*hm./perceivedhead);
+        ovftable=alpha*dt*ovf(0:dx:tracklength); % Create look-up table for vtilda
+    
+    otherwise
+        error('OMG 4 options and you still can''t decide. laaame.')
+end
+
+
 
 %% Set up initial conditions
 
@@ -86,7 +140,7 @@ for t=1:npts
             if drivers(d).state == 0,
                 drivers(d).perceivedhead=mod(diff(positions([d drivers(d).infront],t-tau)),tracklength); % Update perceived headway if driver is alert
             end
-            drivers(d).v=(1-alpha*dt)*drivers(d).v+vtildatable(round(drivers(d).perceivedhead/dx)+1); % Update velocity as a function of perceived headway
+            drivers(d).v=(1-alpha*dt)*drivers(d).v+ovftable(round(drivers(d).perceivedhead/dx)+1); % Update velocity as a function of perceived headway
         end
         drivers(d).x=mod(drivers(d).x+drivers(d).v*dt,tracklength); % Update position
         
@@ -106,7 +160,7 @@ for t=1:npts
             % Check if collision occurred. If it did, reorder drivers and
             % alter velocities of collided vehicles
             count=0;
-            while drivers(d).realhead>tracklength-2*dt*(C(1)+C(4))
+            while drivers(d).realhead>tracklength-2*dt*vmax
                 count=count+1;
                 ncollisions=ncollisions+1;
                 me=d;
