@@ -69,6 +69,20 @@ switch whichmodel
         
     %% Human Driver Model
     case 3
+        w=0; % Initialization of the Wiener process
+        corrt=20; % Correlation time in s
+        na=1; % Number of anticipated vehicles (look-ahead)
+        relerror=0.05; % Relative error in estimating headway
+        rc=0.01; % Inverse "TTC" error in /s
+        vmax=128/3.6; % Maximum velocity in m/s
+        T=1.1; % ?? in s
+        a=1; % ??? in m/s^2
+        b=1.5; % ??? m/s^2
+        s0=2; % Minimum length in m
+        wiener=@(w) exp(-dt/corrt)*w+sqrt(2*dt/corrt)*randn(size(w));
+        
+        
+        
         
     %% Generalized Force Model
     case 4
@@ -93,7 +107,7 @@ switch whichmodel
         dvdt=@(perchead,percv,percvdiff) alpha*dt*(vmax*exp(-2*hm./perchead)-percv);
     
     otherwise
-        error('OMG 4 options and you still can''t decide. laaame.')
+        error('OMG 5 options and you still can''t decide. laaame.')
 end
 
 
