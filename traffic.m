@@ -14,7 +14,7 @@ doplot=1; % Toggle whether to plot
 ncollisions=0; % Initialize number of collisions
 maxtime=50; % Number of seconds to simulate
 dx=0.1; % Spatial step for calculating look-up table
-dt=0.1; % Timestep size in seconds
+dt=0.01; % Timestep size in seconds
 npts=maxtime/dt;
 time=dt:dt:maxtime;
 
@@ -24,7 +24,7 @@ usestates=0;
 ndrivers=10; % Number of drivers
 tracklength=300; % Track length in meters
 defaultv=20; % Default velocity in m/s
-tau=round(0.5/dt); % Reaction time (in number of timesteps)
+tau=round(0.0/dt); % Reaction time (in number of timesteps)
 randvel=5; % Randomness in initial velocity in m/s
 randpos=5; % Randomness in initial positions in m
 
@@ -132,7 +132,7 @@ for t=1:npts
     
     % Solve motion of each driver at timepoint 'd'
     for d=1:ndrivers
-        if t>tau % Update velocity
+        if t>tau+1 % Update velocity
             sr = rand(1); % Random variable for determing transitions of Markov process
             if drivers(d).state==0
                 if sr<psleep,
@@ -149,9 +149,9 @@ for t=1:npts
             end
             
             if drivers(d).state == 0,
-                drivers(d).percv=velocities(d,t-tau); % Update perceived velocity if driver is alert
-                drivers(d).perchead=mod(diff(positions([d drivers(d).infront],t-tau)),tracklength); % Update perceived headway if driver is alert
-                drivers(d).percvdiff=diff(velocities([drivers(d).infront d],t-tau)); % Update perceived velocity difference if driver is alert
+                drivers(d).percv=velocities(d,t-tau-1); % Update perceived velocity if driver is alert
+                drivers(d).perchead=mod(diff(positions([d drivers(d).infront],t-tau-1)),tracklength); % Update perceived headway if driver is alert
+                drivers(d).percvdiff=diff(velocities([drivers(d).infront d],t-tau-1)); % Update perceived velocity difference if driver is alert
             end
             drivers(d).v=drivers(d).v+dvdt(drivers(d).perchead, drivers(d).percv, drivers(d).percvdiff); % Update velocity as a function of perceived headway
         end
@@ -240,7 +240,7 @@ if doplot==1
     
     %% Plot cars
     
-    for t=1:npts
+    for t=1:round(0.1/dt):npts
         set(gcf,'currentaxes',h)
         current=positions(:,t);
         
@@ -258,7 +258,6 @@ if doplot==1
         xlim(axislims)
         ylim(axislims)
         drawnow
-%         pause(dt) % Choose rate of animation
         if t<npts, delete(q), delete(w), delete(z), end % Remove points to update
     end
 end
