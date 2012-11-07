@@ -12,21 +12,21 @@ doplot=1; % Toggle whether to plot
 
 % Boring initialization stuff
 ncollisions=0; % Initialize number of collisions
-maxtime=40; % Number of seconds to simulate
+maxtime=50; % Number of seconds to simulate
 dx=0.1; % Spatial step for calculating look-up table
 dt=0.1; % Timestep size in seconds
 npts=maxtime/dt;
 time=dt:dt:maxtime;
 
 % Model parameters
-whichmodel=4;
+whichmodel=5;
 usestates=0;
-ndrivers=6; % Number of drivers
-tracklength=100; % Track length in meters
+ndrivers=10; % Number of drivers
+tracklength=300; % Track length in meters
 defaultv=20; % Default velocity in m/s
 tau=round(0.5/dt); % Reaction time (in number of timesteps)
-randvel=10; % Randomness in initial velocity in m/s
-randpos=0; % Randomness in initial positions in m
+randvel=5; % Randomness in initial velocity in m/s
+randpos=5; % Randomness in initial positions in m
 
 
 
@@ -54,17 +54,18 @@ switch whichmodel
         vmax=C(1)+C(4);
         alpha=0.5; % Responsivity of drivers
         % Define optimal velocity function
-        dvdt=@(perchead,velocity,percvdiff) alpha*dt*(max(0,C(1)*tanh(C(2)*perchead+C(3))+C(4))-velocity); % Taken from paper
+        dvdt=@(perchead,percv,percvdiff) alpha*dt*(max(0,C(1)*tanh(C(2)*perchead+C(3))+C(4))-percv); % Taken from paper
 
     
     %% Orosz Model
     case 2
+        disp('CHECK')
         % Set parameters
         hstop=7;
         vmax=32;
         alpha=0.5; % Responsivity of drivers
         % Define optimal velocity function
-        dvdt=@(perchead,velocity,percvdiff) alpha*dt*(max(0,vmax*(perchead/hstop - 1).^3./(1 + (perchead/hstop - 1).^3))-velocity);
+        dvdt=@(perchead,percv,percvdiff) alpha*dt*(max(0,vmax*(perchead/hstop - 1).^3./(1 + (perchead/hstop - 1).^3))-percv);
         
     %% Human Driver Model
     case 3
@@ -75,13 +76,13 @@ switch whichmodel
         vmax=16.98; % ?? Maximum velocity ish?
         d=1.38; % Minimum vehicle distance in m
         T=0.74; % Safe time headway in s
-        alphaprime=1/0.77; % ?? Thingie in s
+        alphaprime=1/0.77; % Braking rate in s
         R=5.59; % ?? in m
         Rprime=98.78; % Braking interaction distance in m
         
-        s=@(velocity) d+T*velocity;
-        V=@(perchead,velocity) vmax*(1-exp(-(perchead-s(velocity))/R));
-        dvdt=@(perchead,velocity,percvdiff) alpha*dt*(vmax - velocity + V(perchead,velocity)-vmax) - alphaprime*dt*max(0,percvdiff)*exp(-(perchead-s(velocity))/Rprime);
+        s=@(percv) d+T*percv;
+        V=@(perchead,percv) vmax*(1-exp(-(perchead-s(percv))/R));
+        dvdt=@(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff)*exp(-(perchead-s(percv))/Rprime);
         
         
     %% Underwood Model
@@ -89,7 +90,7 @@ switch whichmodel
         vmax=24.40; % Maximum velocity in m/s
         hm=12.92; % Headway inflection point in m
         alpha=0.88; % Responsivity in /s
-        dvdt=@(perchead,velocity) alpha*dt*(vmax*exp(-2*hm./perchead)-velocity);
+        dvdt=@(perchead,percv,percvdiff) alpha*dt*(vmax*exp(-2*hm./perchead)-percv);
     
     otherwise
         error('OMG 4 options and you still can''t decide. laaame.')
@@ -106,6 +107,7 @@ for d=1:ndrivers
     drivers(d).state=0; % Alert vs. fucked
     drivers(d).realhead=tracklength/ndrivers; % Amount of distance to car in front
     drivers(d).perchead=tracklength/ndrivers; % Amount of distance to car in front
+    drivers(d).percv=0; % Perceived velocity
     drivers(d).percvdiff=0; % Perceived velocity difference
     drivers(d).infront=mod(d,ndrivers)+1; % Index of driver in front
     drivers(d).behind=mod(d-2,ndrivers)+1; % Index of driver behind
@@ -120,6 +122,7 @@ positions=matrix;
 velocities=matrix;
 realheads=matrix;
 percheads=matrix;
+percvs=matrix;
 percvdiffs=matrix;
 states=matrix;
 collisions=matrix;
@@ -146,15 +149,17 @@ for t=1:npts
             end
             
             if drivers(d).state == 0,
+                drivers(d).percv=velocities(d,t-tau); % Update perceived velocity if driver is alert
                 drivers(d).perchead=mod(diff(positions([d drivers(d).infront],t-tau)),tracklength); % Update perceived headway if driver is alert
                 drivers(d).percvdiff=diff(velocities([drivers(d).infront d],t-tau)); % Update perceived velocity difference if driver is alert
             end
-            drivers(d).v=drivers(d).v+dvdt(drivers(d).perchead,drivers(d).v,drivers(d).percvdiff); % Update velocity as a function of perceived headway
+            drivers(d).v=drivers(d).v+dvdt(drivers(d).perchead, drivers(d).percv, drivers(d).percvdiff); % Update velocity as a function of perceived headway
         end
         drivers(d).x=mod(drivers(d).x+drivers(d).v*dt,tracklength); % Update position
         
         positions(d,t)=drivers(d).x; % Save current position
         velocities(d,t)=drivers(d).v; % Save current position
+        percvs(d,t)=drivers(d).percv; % Save current position
         realheads(d,t)=drivers(d).realhead; % Save current actual headway
         percheads(d,t)=drivers(d).perchead; % Save current perceived head
         percvdiffs(d,t)=drivers(d).v; % Save current position
