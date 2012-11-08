@@ -84,6 +84,7 @@ switch whichmodel
         
         
         
+        
     %% Generalized Force Model
     case 4
         alpha=1/2.45; % Responsivity rate in /s
