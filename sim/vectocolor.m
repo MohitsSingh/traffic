@@ -95,3 +95,5 @@ if nargin < 2
 else
     y = max(x,[],dim) - min(x,[],dim);
 end
+
+end
