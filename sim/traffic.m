@@ -32,7 +32,7 @@ randpos=5; % Randomness in initial positions in m
 
 %% Markov process parameters
 if useawake==1
-    tausleep = 3; % Time constant for losing alertness
+    tausleep = 6; % Time constant for losing alertness
     tauwake =  3; % Time constant for regaining alertness
 else
     tausleep = 1e9;
