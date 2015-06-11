@@ -20,7 +20,7 @@ time=dt:dt:maxtime;
 
 % Model parameters
 whichmodel=5;
-usestates=0;
+usestates=1;
 ndrivers=10; % Number of drivers
 tracklength=300; % Track length in meters
 defaultv=20; % Default velocity in m/s
@@ -32,8 +32,8 @@ randpos=5; % Randomness in initial positions in m
 
 %% Markov process parameters
 if usestates==1
-    psleep = 0.1; % Probability of losing alertness
-    pwake =  0.1; % Probability of regaining alertness
+    psleep = 0.001; % Probability of losing alertness
+    pwake =  0.001; % Probability of regaining alertness
 else
     psleep = 0;
     pwake = 1;
