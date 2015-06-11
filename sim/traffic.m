@@ -20,7 +20,7 @@ time=dt:dt:maxtime;
 
 % Model parameters
 whichmodel=5;
-usestates=1;
+useawake=1;
 ndrivers=10; % Number of drivers
 tracklength=300; % Track length in meters
 defaultv=20; % Default velocity in m/s
@@ -31,12 +31,28 @@ randpos=5; % Randomness in initial positions in m
 
 
 %% Markov process parameters
-if usestates==1
-    psleep = 0.001; % Probability of losing alertness
-    pwake =  0.001; % Probability of regaining alertness
+if useawake==1
+    tausleep = 3; % Time constant for losing alertness
+    tauwake =  3; % Time constant for regaining alertness
 else
-    psleep = 0;
-    pwake = 1;
+    tausleep = 1e9;
+    tauwake = 1e-9;
+end
+
+
+%% Set up initial conditions
+
+drivers=struct;
+for d=1:ndrivers
+    drivers(d).x=(d/ndrivers)*tracklength+randpos*randn; % Initial position
+    drivers(d).v=defaultv+randvel*randn; % Initial velocity
+    drivers(d).alert=1; % Alert vs. fucked
+    drivers(d).realhead=tracklength/ndrivers; % Amount of distance to car in front
+    drivers(d).perchead=tracklength/ndrivers; % Amount of distance to car in front
+    drivers(d).percv=0; % Perceived velocity
+    drivers(d).percvdiff=0; % Perceived velocity difference
+    drivers(d).infront=mod(d,ndrivers)+1; % Index of driver in front
+    drivers(d).behind=mod(d-2,ndrivers)+1; % Index of driver behind
 end
 
 
@@ -113,21 +129,6 @@ end
 
 
 
-%% Set up initial conditions
-
-drivers=struct;
-for d=1:ndrivers
-    drivers(d).x=(d/ndrivers)*tracklength+randpos*randn; % Initial position
-    drivers(d).v=defaultv+randvel*randn; % Initial velocity
-    drivers(d).state=0; % Alert vs. fucked
-    drivers(d).realhead=tracklength/ndrivers; % Amount of distance to car in front
-    drivers(d).perchead=tracklength/ndrivers; % Amount of distance to car in front
-    drivers(d).percv=0; % Perceived velocity
-    drivers(d).percvdiff=0; % Perceived velocity difference
-    drivers(d).infront=mod(d,ndrivers)+1; % Index of driver in front
-    drivers(d).behind=mod(d-2,ndrivers)+1; % Index of driver behind
-end
-
 %% Run simulation
 
 % Initialize data matrices
@@ -139,7 +140,7 @@ realheads=matrix;
 percheads=matrix;
 percvs=matrix;
 percvdiffs=matrix;
-states=matrix;
+alert=matrix;
 collisions=matrix;
 
 % Solve difference equations across all time points
@@ -149,21 +150,17 @@ for t=1:npts
     for d=1:ndrivers
         if t>tau+1 % Update velocity
             sr = rand(1); % Random variable for determing transitions of Markov process
-            if drivers(d).state==0
-                if sr<psleep,
-                    drivers(d).state=1;
-                else
-                    drivers(d).state=0;
+            if drivers(d).alert==1
+                if sr < dt/tausleep
+                    drivers(d).alert=0;
                 end
             else
-                if sr<pwake,
-                    drivers(d).state=0;
-                else
-                    drivers(d).state=1;
+                if sr < dt/tauwake
+                    drivers(d).alert=1;
                 end
             end
             
-            if drivers(d).state == 0,
+            if drivers(d).alert == 1,
                 drivers(d).percv=velocities(d,t-tau-1); % Update perceived velocity if driver is alert
                 drivers(d).perchead=mod(diff(positions([d drivers(d).infront],t-tau-1)),tracklength); % Update perceived headway if driver is alert
                 drivers(d).percvdiff=diff(velocities([drivers(d).infront d],t-tau-1)); % Update perceived velocity difference if driver is alert
@@ -178,7 +175,7 @@ for t=1:npts
         realheads(d,t)=drivers(d).realhead; % Save current actual headway
         percheads(d,t)=drivers(d).perchead; % Save current perceived head
         percvdiffs(d,t)=drivers(d).v; % Save current position
-        states(d,t)=drivers(d).state; % Save state
+        alert(d,t)=drivers(d).alert; % Save state
     end
     
     % Use actual headway to check for drivers overtaking one another; treat these events as collisions
@@ -261,7 +258,7 @@ if doplot==1
         
         x=radius*cos(2*pi*current/tracklength);
         y=radius*sin(2*pi*current/tracklength);
-        alertness=logical(states(:,t)); % Show alertness
+        alertness=logical(alert(:,t)); % Show alertness
         w=scatter(x(alertness),y(alertness),100,paint(alertness,:),'filled','y');
         q=scatter(x,y,25,paint,'filled');
         boom=logical(collisions(:,t)); % Show collisions
