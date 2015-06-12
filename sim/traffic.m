@@ -98,9 +98,6 @@ switch whichmodel
         wiener=@(w) exp(-dt/corrt)*w+sqrt(2*dt/corrt)*randn(size(w));
         
         
-        
-        
-        
     %% Generalized Force Model
     case 4
         alpha=1/2.45; % Responsivity rate in /s
