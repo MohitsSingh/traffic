@@ -32,7 +32,7 @@ randpos = 5; % Randomness in initial positions in m
 
 
 %% Markov process parameters
-if useawake = = 1
+if useawake == 1
     tausleep = 6; % Time constant for losing alertness
     tauwake =  3; % Time constant for regaining alertness
 else
@@ -148,7 +148,7 @@ for t = 1:npts
     for d = 1:ndrivers
         if t>tau+1 % Update velocity
             sr = rand(1); % Random variable for determing transitions of Markov process
-            if drivers(d).alert = = 1
+            if drivers(d).alert == 1
                 if sr < dt/tausleep
                     drivers(d).alert = 0;
                 end
@@ -158,7 +158,7 @@ for t = 1:npts
                 end
             end
             
-            if drivers(d).alert = = 1,
+            if drivers(d).alert == 1,
                 drivers(d).percv = velocities(d,t-tau-1); % Update perceived velocity if driver is alert
                 drivers(d).perchead = mod(diff(positions([d drivers(d).infront],t-tau-1)),tracklength); % Update perceived headway if driver is alert
                 drivers(d).percvdiff = diff(velocities([drivers(d).infront d],t-tau-1)); % Update perceived velocity difference if driver is alert
@@ -214,7 +214,7 @@ fprintf('Number of collisions: %i\n',ncollisions) % Output number of collisions
 
 %% Data analysis and plotting
 
-if doplot = = 1
+if doplot == 1
     figure('position',[200 200 1600 800])
     radius = tracklength/(2*pi); % Set radius of track
     paint = vectocolor(1:ndrivers)/2; % Choose colors for vehicles
