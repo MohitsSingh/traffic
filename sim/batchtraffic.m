@@ -22,9 +22,9 @@ time = dt:dt:maxtime;
 whichmodel = 5;
 useawake = 1;
 tracklength = 300; % Track length in meters
-tau = round(0.0/dt); % Reaction time (in number of timesteps)
-randvel = 5; % Randomness in initial velocity in m/s
-randpos = 5; % Randomness in initial positions in m
+tau = round(1.2/dt); % Reaction time (in number of timesteps)
+randvel = 0; % Randomness in initial velocity in m/s
+randpos = 0; % Randomness in initial positions in m
 
 % User-set variables
 ndriverslist = 20; % Number of drivers
