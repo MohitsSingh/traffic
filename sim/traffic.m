@@ -21,13 +21,12 @@ time=dt:dt:maxtime;
 % Model parameters
 whichmodel=5;
 useawake=1;
-ndrivers=10; % Number of drivers
-tracklength=300; % Track length in meters
+ndrivers=100; % Number of drivers
+tracklength=3000; % Track length in meters
 defaultv=20; % Default velocity in m/s
 tau=round(0.0/dt); % Reaction time (in number of timesteps)
 randvel=5; % Randomness in initial velocity in m/s
 randpos=5; % Randomness in initial positions in m
-
 
 
 %% Markov process parameters
