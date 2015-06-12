@@ -141,7 +141,7 @@ end
 
 %% Loop over inputs and simulations
 disp('Running simulations...')
-parfor i = 1:ninputs % Loop over number of drivers, for example...not implemented, for now
+for i = 1:ninputs % Loop over number of drivers, for example...not implemented, for now
     ndrivers = inputs(i).ndrivers;
     defaultv = inputs(i).defaultv;
     for s = 1:nsims
