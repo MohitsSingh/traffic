@@ -27,8 +27,9 @@ randvel = 0; % Randomness in initial velocity in m/s
 randpos = 0; % Randomness in initial positions in m
 
 % User-set variables
-ndriverslist = 20; % Number of drivers
-defaultvlist = [5, 10, 20, 50, 100]; % Default velocities in m/s
+ndriverslist = 10; % Number of drivers
+defaultvlist = [10, 20, 30, 50, 60, 80, 100, 150]; % Default velocities in km/h
+defaultvlist = defaultvlist/3.6; % Convert to m/s
 ninputs = 0;
 inputs = struct();
 for d = 1:length(ndriverslist)
@@ -57,9 +58,15 @@ end
 %% Define outputs
 nsimzeros = zeros(ninputs, nsims);
 outputs = struct();
-outputs.collisions = nsimzeros;
-outputs.meanvelocity = nsimzeros;
-outputs.headwaycv = nsimzeros;
+loopoutputs = struct();
+outfields = {'collisions', 'meanvelocity', 'headwaycv'};
+for f = 1:length(outfields)
+    field = outfields{f};
+    for i = 1:ninputs
+        loopoutputs(i).(field) = zeros(nsims,1);
+    end
+    outputs.(field) = nsimzeros;
+end
 
 
 %% Define traffic model
@@ -134,13 +141,11 @@ end
 
 %% Loop over inputs and simulations
 disp('Running simulations...')
-loopcount = 0;
-for i = 1:ninputs % Loop over number of drivers, for example...not implemented, for now
+parfor i = 1:ninputs % Loop over number of drivers, for example...not implemented, for now
     ndrivers = inputs(i).ndrivers;
     defaultv = inputs(i).defaultv;
     for s = 1:nsims
-        loopcount = loopcount+1;
-        fprintf('  %i of %i\n', loopcount, ninputs*nsims)
+        fprintf('  %i of %i\n', nsims*(i-1)+s, ninputs*nsims)
         
         %% Set up initial conditions
         
@@ -239,10 +244,18 @@ for i = 1:ninputs % Loop over number of drivers, for example...not implemented, 
             
         end
         
-        outputs.collisions(i,s) = ncollisions;
-        outputs.meanvelocity(i,s) = mean(velocities(:));
-        outputs.headwaycv(i,s) = std(percheads(:))/mean(percheads(:));
+        loopoutputs(i).collisions(s) = ncollisions;
+        loopoutputs(i).meanvelocity(s) = mean(velocities(:))*3.6;
+        loopoutputs(i).headwaycv(s) = std(percheads(:))/mean(percheads(:));
         
+    end
+end
+
+%% Gather outputs
+for f = 1:length(outfields)
+    field = outfields{f};
+    for i = 1:ninputs
+        outputs.(field)(i,:) = loopoutputs(i).(field);
     end
 end
 
@@ -273,8 +286,8 @@ figure()
 for i=1:noutputs
     subplot(2,2,i); hold on
     f = outputfields{i};
-    errorbar(defaultvlist, stats.(f).best, stats.(f).best-stats.(f).low, stats.(f).high-stats.(f).best)
-    scatter(defaultvlist, stats.(f).best)
+    errorbar(defaultvlist*3.6, stats.(f).best, stats.(f).best-stats.(f).low, stats.(f).high-stats.(f).best)
+    scatter(defaultvlist*3.6, stats.(f).best)
     title(outputnames{i})
 end
 
@@ -282,3 +295,4 @@ end
 
 
 disp('Done.')
+toc
