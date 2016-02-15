@@ -22,12 +22,12 @@ time = dt:dt:maxtime;
 % Model parameters
 whichmodel = 5;
 useawake = 0;
-ndrivers = 20; % Number of drivers
+ndrivers = 20; % Number kof drivers
 tracklength = 300; % Track length in meters
 defaultv = 20; % Default velocity in m/s
 tau = round(0.0/dt); % Reaction time (in number of timesteps)
-randvel = 0; % Randomness in initial velocity in m/s
-randpos = 0; % Randomness in initial positions in m
+randvel = 5; % Randomness in initial velocity in m/s
+randpos = 5; % Randomness in initial positions in m
 
 
 %% Markov process parameters
@@ -134,7 +134,7 @@ matrix = zeros(ndrivers,npts);
 matrixdup = zeros(ndrivers+1,npts); % Duplicate first driver
 positions = matrix;
 velocities = matrix;
-positionsdup= matrixdup;
+positionsdup = matrixdup;
 velocitiesdup = matrixdup;
 realheads = matrix;
 percheads = matrix;
@@ -146,17 +146,19 @@ collisions = matrix;
 % Solve difference equations across all time points
 for t = 1:npts
     
-    [~, order] = sort(drivers.x);
-    order = [order; 1]; 
     
     
     % Solve motion of each driver at timepoint 'd'
     if t>tau+1 % Update velocity
+        
+        [~, order] = sort(positionsdup(:,t-tau-1));    
+        
         sr = rand(ndrivers,1); % Random variable for determing transitions of Markov process
         drivers.alert = drivers.alert - (sr < dt/tausleep).*drivers.alert + (sr < dt/tauwake).*(1-drivers.alert);
 
         if drivers.alert==1,
             drivers.percv = velocities(:,t-tau-1); % Update perceived velocity if driver is alert
+            drivers.infront = 
             drivers.perchead = mod(diff(positionsdup(order,t-tau-1)),tracklength); % Update perceived headway if driver is alert
             drivers.percvdiff = diff(velocitiesdup(order,t-tau-1)); % Update perceived velocity difference if driver is alert
             drivers.perchead = [drivers.perchead(2:end); drivers.perchead(1)]; % Manually put last driver first
@@ -168,14 +170,14 @@ for t = 1:npts
     
     
     
-    output = [order(2:end) drivers.x drivers.v drivers.dvdt drivers.perchead drivers.percv drivers.percvdiff];
+    output = [drivers.x drivers.v drivers.dvdt drivers.perchead drivers.percv drivers.percvdiff];
     disp('order, x, v, dvdt, perchead, percv, percvdiff')
     disp([t, npts])
     disp(output)
     
-    if any(drivers.x ~= sort(drivers.x))
-        pause
-    end
+%     if any(drivers.x ~= sort(drivers.x))
+%         pause
+%     end
 
     positions(:,t) = drivers.x; % Save current position
     velocities(:,t) = drivers.v; % Save current velocity
