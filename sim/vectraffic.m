@@ -51,6 +51,7 @@ drivers.realhead = ndriversones*tracklength/ndrivers; % Amount of distance to ca
 drivers.perchead = ndriversones*tracklength/ndrivers; % Amount of distance to car in front
 drivers.percv = 0*ndriversones; % Perceived velocity
 drivers.percvdiff = 0*ndriversones; % Perceived velocity difference
+drivers.dvdt = 0*ndriversones; % Change in velocity
 drivers.infront = mod(driversvec,ndrivers)+1; % Index of driver in front
 drivers.behind = mod(driversvec-2,ndrivers)+1; % Index of driver behind
 
@@ -155,9 +156,15 @@ for t = 1:npts
             drivers.perchead = mod(diff(positionsdup(:,t-tau-1)),tracklength); % Update perceived headway if driver is alert
             drivers.percvdiff = diff(velocitiesdup(:,t-tau-1)); % Update perceived velocity difference if driver is alert
         end
-        drivers.v = drivers.v+dvdt(drivers.perchead, drivers.percv, drivers.percvdiff); % Update velocity as a function of perceived headway
+        drivers.dvdt = dvdt(drivers.perchead, drivers.percv, drivers.percvdiff); % Calculate change in velocity -- key step!
+        drivers.v = drivers.v+drivers.dvdt; % Update velocity as a function of perceived headway
     end
     drivers.x = mod(drivers.x+drivers.v*dt, tracklength); % Update position
+    
+%     output = [drivers.x drivers.v drivers.dvdt drivers.perchead drivers.percv drivers.percvdiff];
+%     disp([t, npts])
+%     disp(output)
+%     pause
 
     positions(:,t) = drivers.x; % Save current position
     velocities(:,t) = drivers.v; % Save current velocity
