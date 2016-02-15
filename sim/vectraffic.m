@@ -13,7 +13,7 @@ doplot = 1; % Toggle whether to plot
 
 % Boring initialization stuff
 ncollisions = 0; % Initialize number of collisions
-maxtime = 50; % Number of seconds to simulate
+maxtime = 100; % Number of seconds to simulate
 dx = 0.1; % Spatial step for calculating look-up table
 dt = 0.01; % Timestep size in seconds
 npts = maxtime/dt;
@@ -23,11 +23,11 @@ time = dt:dt:maxtime;
 whichmodel = 4;
 useawake = 0;
 ndrivers = 20; % Number kof drivers
-tracklength = 300; % Track length in meters
-defaultv = 20; % Default velocity in m/s
+tracklength = 500; % Track length in meters
+defaultv = 0; % Default velocity in m/s
 tau = round(0.0/dt); % Reaction time (in number of timesteps)
-randvel = 10; % Randomness in initial velocity in m/s
-randpos = 10; % Randomness in initial positions in m
+randvel = 0; % Randomness in initial velocity in m/s
+randpos = 0; % Randomness in initial positions in m
 
 
 %% Markov process parameters
