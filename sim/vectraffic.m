@@ -42,8 +42,9 @@ end
 
 %% Set up initial conditions
 ndriversones = ones(ndrivers,1);
+driversvec = (1:ndrivers)';
 drivers = struct;
-drivers.x = (d/ndrivers)*tracklength+randpos*randn(ndrivers,1); % Initial position
+drivers.x = driversvec/ndrivers*tracklength+randpos*randn(ndrivers,1); % Initial position
 drivers.v = defaultv+randvel*randn(ndrivers,1); % Initial velocity
 drivers.alert = ndriversones; % Alert vs. fucked
 drivers.realhead = ndriversones*tracklength/ndrivers; % Amount of distance to car in front
@@ -142,47 +143,45 @@ collisions = matrix;
 for t = 1:npts
     
     % Solve motion of each driver at timepoint 'd'
-    for d = 1:ndrivers
-        if t>tau+1 % Update velocity
-            sr = rand(1); % Random variable for determing transitions of Markov process
-            if drivers(d).alert == 1
-                if sr < dt/tausleep
-                    drivers(d).alert = 0;
-                end
-            else
-                if sr < dt/tauwake
-                    drivers(d).alert = 1;
-                end
+    if t>tau+1 % Update velocity
+        sr = rand(1); % Random variable for determing transitions of Markov process
+        if drivers.alert == 1
+            if sr < dt/tausleep
+                drivers.alert = 0;
             end
-            
-            if drivers(d).alert==1,
-                drivers(d).percv = velocities(d,t-tau-1); % Update perceived velocity if driver is alert
-                drivers(d).perchead = mod(diff(positions([d drivers(d).infront],t-tau-1)),tracklength); % Update perceived headway if driver is alert
-                drivers(d).percvdiff = diff(velocities([drivers(d).infront d],t-tau-1)); % Update perceived velocity difference if driver is alert
+        else
+            if sr < dt/tauwake
+                drivers.alert = 1;
             end
-            drivers(d).v = drivers(d).v+dvdt(drivers(d).perchead, drivers(d).percv, drivers(d).percvdiff); % Update velocity as a function of perceived headway
         end
-        drivers(d).x = mod(drivers(d).x+drivers(d).v*dt,tracklength); % Update position
-        
-        positions(d,t) = drivers(d).x; % Save current position
-        velocities(d,t) = drivers(d).v; % Save current position
-        percvs(d,t) = drivers(d).percv; % Save current position
-        realheads(d,t) = drivers(d).realhead; % Save current actual headway
-        percheads(d,t) = drivers(d).perchead; % Save current perceived head
-        percvdiffs(d,t) = drivers(d).v; % Save current position
-        alert(d,t) = drivers(d).alert; % Save state
+
+        if drivers.alert==1,
+            drivers.percv = velocities(d,t-tau-1); % Update perceived velocity if driver is alert
+            drivers.perchead = mod(diff(positions([d drivers.infront],t-tau-1)),tracklength); % Update perceived headway if driver is alert
+            drivers.percvdiff = diff(velocities([drivers.infront d],t-tau-1)); % Update perceived velocity difference if driver is alert
+        end
+        drivers.v = drivers.v+dvdt(drivers.perchead, drivers.percv, drivers.percvdiff); % Update velocity as a function of perceived headway
     end
+    drivers.x = mod(drivers.x+drivers.v*dt, tracklength); % Update position
+
+    positions(:,t) = drivers.x; % Save current position
+    velocities(:,t) = drivers.v; % Save current position
+    percvs(:,t) = drivers.percv; % Save current position
+    realheads(:,t) = drivers.realhead; % Save current actual headway
+    percheads(:,t) = drivers.perchead; % Save current perceived head
+    percvdiffs(:,t) = drivers.v; % Save current position
+    alert(:,t) = drivers.alert; % Save state
     
     % Use actual headway to check for drivers overtaking one another; treat these events as collisions
     for d = 1:ndrivers
         % Update positions
         if t>1
   
-            drivers(d).realhead = mod(diff(positions([d drivers(d).infront],t-1)),tracklength);
+            drivers.realhead = mod(diff(positions([d drivers.infront],t-1)),tracklength);
             % Check if collision occurred. If it did, reorder drivers and
             % alter velocities of collided vehicles
             count = 0;
-            while drivers(d).realhead>tracklength-2*dt*vmax
+            while drivers.realhead>tracklength-2*dt*vmax
                 count = count+1;
                 ncollisions = ncollisions+1;
                 me = d;
@@ -195,10 +194,10 @@ for t = 1:npts
                 drivers(infront1).infront = me;
                 drivers(infront1).behind = behind;
                 drivers(infront2).behind = me;
-                drivers(d).realhead = mod(diff(positions([d drivers(d).infront],t-1)),tracklength);
-                drivers(d).v = 0;
-                drivers(drivers(d).behind).v = 0;
-                collisions(d,t) = 1;
+                drivers.realhead = mod(diff(positions([d drivers.infront],t-1)),tracklength);
+                drivers.v = 0;
+                drivers(drivers.behind).v = 0;
+                collisions(:,t) = 1;
             end
         end
     end
