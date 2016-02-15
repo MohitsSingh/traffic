@@ -13,7 +13,7 @@ doplot = 1; % Toggle whether to plot
 
 % Boring initialization stuff
 ncollisions = 0; % Initialize number of collisions
-maxtime = 20; % Number of seconds to simulate
+maxtime = 30; % Number of seconds to simulate
 dx = 0.1; % Spatial step for calculating look-up table
 dt = 0.01; % Timestep size in seconds
 npts = maxtime/dt;
@@ -21,19 +21,19 @@ time = dt:dt:maxtime;
 
 % Model parameters
 whichmodel = 5;
-useawake = 0;
+useawake = 1;
 ndrivers = 20; % Number kof drivers
 tracklength = 300; % Track length in meters
 defaultv = 20; % Default velocity in m/s
 tau = round(0.0/dt); % Reaction time (in number of timesteps)
-randvel = 5; % Randomness in initial velocity in m/s
-randpos = 5; % Randomness in initial positions in m
+randvel = 10; % Randomness in initial velocity in m/s
+randpos = 10; % Randomness in initial positions in m
 
 
 %% Markov process parameters
 if useawake == 1
-    tausleep = 6; % Time constant for losing alertness
-    tauwake =  3; % Time constant for regaining alertness
+    tausleep = 20; % Time constant for losing alertness
+    tauwake =  20; % Time constant for regaining alertness
 else
     tausleep = 1e9;
     tauwake = 1e-9;
@@ -44,7 +44,7 @@ end
 ndriversones = ones(ndrivers,1);
 driversvec = (1:ndrivers)';
 drivers = struct;
-drivers.x = driversvec/ndrivers*tracklength+randpos*randn(ndrivers,1); % Initial position
+drivers.x = mod(driversvec/ndrivers*tracklength+randpos*randn(ndrivers,1), tracklength); % Initial position
 drivers.v = defaultv+randvel*randn(ndrivers,1); % Initial velocity
 drivers.alert = ndriversones; % Alert vs. fucked
 drivers.realhead = ndriversones*tracklength/ndrivers; % Amount of distance to car in front
@@ -143,27 +143,30 @@ collisions = matrix;
 % Solve difference equations across all time points
 for t = 1:npts
     
-    
-    
     % Solve motion of each driver at timepoint 'd'
     if t>tau+1 % Update velocity
                 
         sr = rand(ndrivers,1); % Random variable for determing transitions of Markov process
-        drivers.alert = drivers.alert - (sr < dt/tausleep).*drivers.alert + (sr < dt/tauwake).*(1-drivers.alert);
-
-        if drivers.alert==1,
-            drivers.percv = velocities(:,t-tau-1); % Update perceived velocity if driver is alert
-            [~, xorder] = sort(drivers.x);
-            [~, xorderorder] = sort(xorder);
-            xordershift = circshift(xorder,-1);
-            drivers.infront = xordershift(xorderorder);
-            drivers.perchead = mod(positions(drivers.infront, t-tau-1) - positions(:, t-tau-1), tracklength); % Update perceived headway if driver is alert
-            drivers.percvdiff = velocities(drivers.infront, t-tau-1) - velocities(:, t-tau-1); % Update perceived velocity difference if driver is alert
-        end
+        fallasleep = -(sr < dt/tausleep).*drivers.alert;
+        wakeup = (sr < dt/tauwake).*(1-drivers.alert);
+        drivers.alert = drivers.alert + fallasleep + wakeup;
+        
+        percv = velocities(:,t-tau-1); % Update perceived velocity if driver is alert
+        [~, xorder] = sort(drivers.x);
+        [~, xorderorder] = sort(xorder);
+        xordershift = circshift(xorder,-1);
+        drivers.infront = xordershift(xorderorder);
+        perchead = mod(positions(drivers.infront, t-tau-1) - positions(:, t-tau-1), tracklength); % Update perceived headway if driver is alert
+        percvdiff = velocities(drivers.infront, t-tau-1) - velocities(:, t-tau-1); % Update perceived velocity difference if driver is alert
+        
+        drivers.perchead(drivers.alert==1) = perchead(drivers.alert==1);
+        drivers.percv(drivers.alert==1) = percv(drivers.alert==1);
+        drivers.percvdiff(drivers.alert==1) = percvdiff(drivers.alert==1);
+        
         drivers.dvdt = dvdt(drivers.perchead, drivers.percv, drivers.percvdiff); % Calculate change in velocity -- key step!
-        drivers.v = drivers.v+drivers.dvdt; % Update velocity as a function of perceived headway
+        drivers.v = max(0, drivers.v+drivers.dvdt); % Update velocity as a function of perceived headway
     end
-    drivers.x = drivers.x+drivers.v*dt; % Update position
+    drivers.x = mod(drivers.x+drivers.v*dt, tracklength); % Update position
     
     
     
