@@ -13,7 +13,7 @@ doplot = 1; % Toggle whether to plot
 
 % Boring initialization stuff
 ncollisions = 0; % Initialize number of collisions
-maxtime = 30; % Number of seconds to simulate
+maxtime = 50; % Number of seconds to simulate
 dx = 0.1; % Spatial step for calculating look-up table
 dt = 0.01; % Timestep size in seconds
 npts = maxtime/dt;
@@ -32,8 +32,8 @@ randpos = 10; % Randomness in initial positions in m
 
 %% Markov process parameters
 if useawake == 1
-    tausleep = 20; % Time constant for losing alertness
-    tauwake =  20; % Time constant for regaining alertness
+    tausleep = 30; % Time constant for losing alertness
+    tauwake =  100; % Time constant for regaining alertness
 else
     tausleep = 1e9;
     tauwake = 1e-9;
