@@ -20,7 +20,7 @@ npts = maxtime/dt;
 time = dt:dt:maxtime;
 
 % Model parameters
-whichmodel = 5;
+whichmodel = 4;
 useawake = 1;
 ndrivers = 20; % Number kof drivers
 tracklength = 300; % Track length in meters
@@ -110,7 +110,7 @@ switch whichmodel
         
         s = @(percv) d+T*percv;
         V = @(perchead,percv) vmax*(1-exp(-(perchead-s(percv))/R));
-        dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff)*exp(-(perchead-s(percv))/Rprime);
+        dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff).*exp(-(perchead-s(percv))/Rprime);
         
         
     %% Underwood Model
@@ -160,8 +160,9 @@ for t = 1:npts
         percvdiff = velocities(drivers.infront, t-tau-1) - velocities(:, t-tau-1); % Update perceived velocity difference if driver is alert
         
         drivers.perchead(drivers.alert==1) = perchead(drivers.alert==1);
-        drivers.percv(drivers.alert==1) = percv(drivers.alert==1);
         drivers.percvdiff(drivers.alert==1) = percvdiff(drivers.alert==1);
+%         drivers.percv(drivers.alert==1) = percv(drivers.alert==1);
+        drivers.percv = percv;
         
         drivers.dvdt = dvdt(drivers.perchead, drivers.percv, drivers.percvdiff); % Calculate change in velocity -- key step!
         drivers.v = max(0, drivers.v+drivers.dvdt); % Update velocity as a function of perceived headway
