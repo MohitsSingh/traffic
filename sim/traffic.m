@@ -7,7 +7,7 @@
 tic
 disp('Setting parameters...')
 % General code stuff
-rng(239487) % Random number seed
+% rng(239487) % Random number seed
 doplot=1; % Toggle whether to plot
 
 % Boring initialization stuff
@@ -19,9 +19,9 @@ npts=maxtime/dt;
 time=dt:dt:maxtime;
 
 % Model parameters
-whichmodel=2;
-useawake=1;
-ndrivers=10; % Number of drivers
+whichmodel=5;
+useawake=0;
+ndrivers=20; % Number of drivers
 tracklength=300; % Track length in meters
 defaultv=20; % Default velocity in m/s
 tau=round(0.0/dt); % Reaction time (in number of timesteps)

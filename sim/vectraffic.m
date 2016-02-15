@@ -8,7 +8,7 @@
 tic
 disp('Setting parameters...')
 % General code stuff
-rng(239487) % Random number seed
+% rng(239487) % Random number seed
 doplot = 1; % Toggle whether to plot
 
 % Boring initialization stuff
