@@ -13,7 +13,7 @@ doplot = 1; % Toggle whether to plot
 
 % Boring initialization stuff
 ncollisions = 0; % Initialize number of collisions
-maxtime = 20; % Number of seconds to simulate
+maxtime = 80; % Number of seconds to simulate
 dx = 0.1; % Spatial step for calculating look-up table
 dt = 0.01; % Timestep size in seconds
 npts = maxtime/dt;
@@ -22,11 +22,11 @@ time = dt:dt:maxtime;
 % Model parameters
 whichmodel = 5;
 useawake = 0;
-ndrivers = 10; % Number of drivers
+ndrivers = 20; % Number of drivers
 tracklength = 300; % Track length in meters
 defaultv = 20; % Default velocity in m/s
 tau = round(0.0/dt); % Reaction time (in number of timesteps)
-randvel = 3; % Randomness in initial velocity in m/s
+randvel = 0; % Randomness in initial velocity in m/s
 randpos = 0; % Randomness in initial positions in m
 
 
@@ -146,6 +146,10 @@ collisions = matrix;
 % Solve difference equations across all time points
 for t = 1:npts
     
+    [~, order] = sort(drivers.x);
+    order = [order(end); order]; % Duplicate last entry
+    
+    
     % Solve motion of each driver at timepoint 'd'
     if t>tau+1 % Update velocity
         sr = rand(ndrivers,1); % Random variable for determing transitions of Markov process
@@ -153,8 +157,8 @@ for t = 1:npts
 
         if drivers.alert==1,
             drivers.percv = velocities(:,t-tau-1); % Update perceived velocity if driver is alert
-            drivers.perchead = mod(diff(positionsdup(:,t-tau-1)),tracklength); % Update perceived headway if driver is alert
-            drivers.percvdiff = diff(velocitiesdup(:,t-tau-1)); % Update perceived velocity difference if driver is alert
+            drivers.perchead = mod(diff(positionsdup(order,t-tau-1)),tracklength); % Update perceived headway if driver is alert
+            drivers.percvdiff = diff(velocitiesdup(order,t-tau-1)); % Update perceived velocity difference if driver is alert
             drivers.perchead = [drivers.perchead(2:end); drivers.perchead(1)]; % Manually put last driver first
         end
         drivers.dvdt = dvdt(drivers.perchead, drivers.percv, drivers.percvdiff); % Calculate change in velocity -- key step!
@@ -162,13 +166,15 @@ for t = 1:npts
     end
     drivers.x = drivers.x+drivers.v*dt; % Update position
     
-    output = [drivers.x drivers.v drivers.dvdt drivers.perchead drivers.percv drivers.percvdiff];
-    disp([t, npts])
-    disp(output)
     
-    if any(drivers.x ~= sort(drivers.x))
-        pause
-    end
+    
+%     output = [drivers.x drivers.v drivers.dvdt drivers.perchead drivers.percv drivers.percvdiff];
+%     disp([t, npts])
+%     disp(output)
+    
+%     if any(drivers.x ~= sort(drivers.x))
+%         pause
+%     end
 
     positions(:,t) = drivers.x; % Save current position
     velocities(:,t) = drivers.v; % Save current velocity
