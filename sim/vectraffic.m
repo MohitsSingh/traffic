@@ -21,7 +21,7 @@ time = dt:dt:maxtime;
 
 % Model parameters
 whichmodel = 4;
-useawake = 1;
+useawake = 0;
 ndrivers = 20; % Number kof drivers
 tracklength = 300; % Track length in meters
 defaultv = 20; % Default velocity in m/s
