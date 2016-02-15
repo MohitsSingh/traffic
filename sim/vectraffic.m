@@ -13,7 +13,7 @@ doplot = 1; % Toggle whether to plot
 
 % Boring initialization stuff
 ncollisions = 0; % Initialize number of collisions
-maxtime = 80; % Number of seconds to simulate
+maxtime = 20; % Number of seconds to simulate
 dx = 0.1; % Spatial step for calculating look-up table
 dt = 0.01; % Timestep size in seconds
 npts = maxtime/dt;
@@ -147,7 +147,7 @@ collisions = matrix;
 for t = 1:npts
     
     [~, order] = sort(drivers.x);
-    order = [order(end); order]; % Duplicate last entry
+    order = [order; 1]; 
     
     
     % Solve motion of each driver at timepoint 'd'
@@ -168,13 +168,14 @@ for t = 1:npts
     
     
     
-%     output = [drivers.x drivers.v drivers.dvdt drivers.perchead drivers.percv drivers.percvdiff];
-%     disp([t, npts])
-%     disp(output)
+    output = [order(2:end) drivers.x drivers.v drivers.dvdt drivers.perchead drivers.percv drivers.percvdiff];
+    disp('order, x, v, dvdt, perchead, percv, percvdiff')
+    disp([t, npts])
+    disp(output)
     
-%     if any(drivers.x ~= sort(drivers.x))
-%         pause
-%     end
+    if any(drivers.x ~= sort(drivers.x))
+        pause
+    end
 
     positions(:,t) = drivers.x; % Save current position
     velocities(:,t) = drivers.v; % Save current velocity
