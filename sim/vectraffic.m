@@ -26,8 +26,8 @@ ndrivers = 10; % Number of drivers
 tracklength = 300; % Track length in meters
 defaultv = 20; % Default velocity in m/s
 tau = round(0.0/dt); % Reaction time (in number of timesteps)
-randvel = 5; % Randomness in initial velocity in m/s
-randpos = 5; % Randomness in initial positions in m
+randvel = 3; % Randomness in initial velocity in m/s
+randpos = 0; % Randomness in initial positions in m
 
 
 %% Markov process parameters
@@ -165,6 +165,7 @@ for t = 1:npts
     velocitiesdup(2:end,t) = drivers.v; % Save current velocity
     positionsdup(1,t) = drivers.x(end); % Duplicate final driver
     velocitiesdup(1,t) = drivers.v(end);
+    positionsdup(end,t) = positionsdup(end,t) + tracklength;
     percvs(:,t) = drivers.percv; % Save current perceived velocity
     realheads(:,t) = drivers.realhead; % Save current actual headway
     percheads(:,t) = drivers.perchead; % Save current perceived head
