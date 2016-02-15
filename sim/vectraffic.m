@@ -155,16 +155,20 @@ for t = 1:npts
             drivers.percv = velocities(:,t-tau-1); % Update perceived velocity if driver is alert
             drivers.perchead = mod(diff(positionsdup(:,t-tau-1)),tracklength); % Update perceived headway if driver is alert
             drivers.percvdiff = diff(velocitiesdup(:,t-tau-1)); % Update perceived velocity difference if driver is alert
+            drivers.perchead = [drivers.perchead(2:end); drivers.perchead(1)]; % Manually put last driver first
         end
         drivers.dvdt = dvdt(drivers.perchead, drivers.percv, drivers.percvdiff); % Calculate change in velocity -- key step!
         drivers.v = drivers.v+drivers.dvdt; % Update velocity as a function of perceived headway
     end
-    drivers.x = mod(drivers.x+drivers.v*dt, tracklength); % Update position
+    drivers.x = drivers.x+drivers.v*dt; % Update position
     
-%     output = [drivers.x drivers.v drivers.dvdt drivers.perchead drivers.percv drivers.percvdiff];
-%     disp([t, npts])
-%     disp(output)
-%     pause
+    output = [drivers.x drivers.v drivers.dvdt drivers.perchead drivers.percv drivers.percvdiff];
+    disp([t, npts])
+    disp(output)
+    
+    if any(drivers.x ~= sort(drivers.x))
+        pause
+    end
 
     positions(:,t) = drivers.x; % Save current position
     velocities(:,t) = drivers.v; % Save current velocity
