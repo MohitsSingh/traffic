@@ -8,7 +8,7 @@
 tic
 disp('Setting parameters...')
 % General code stuff
-% rng(239487) % Random number seed
+rng(239487) % Random number seed
 doplot = 1; % Toggle whether to plot
 
 % Boring initialization stuff
@@ -33,7 +33,7 @@ randpos = 10; % Randomness in initial positions in m
 %% Markov process parameters
 if useawake == 1
     tausleep = 30; % Time constant for losing alertness
-    tauwake =  100; % Time constant for regaining alertness
+    tauwake =  1; % Time constant for regaining alertness
 else
     tausleep = 1e9;
     tauwake = 1e-9;
