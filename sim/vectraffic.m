@@ -41,19 +41,17 @@ end
 
 
 %% Set up initial conditions
-
+ndriversones = ones(ndrivers,1);
 drivers = struct;
-for d = 1:ndrivers
-    drivers(d).x = (d/ndrivers)*tracklength+randpos*randn; % Initial position
-    drivers(d).v = defaultv+randvel*randn; % Initial velocity
-    drivers(d).alert = 1; % Alert vs. fucked
-    drivers(d).realhead = tracklength/ndrivers; % Amount of distance to car in front
-    drivers(d).perchead = tracklength/ndrivers; % Amount of distance to car in front
-    drivers(d).percv = 0; % Perceived velocity
-    drivers(d).percvdiff = 0; % Perceived velocity difference
-    drivers(d).infront = mod(d,ndrivers)+1; % Index of driver in front
-    drivers(d).behind = mod(d-2,ndrivers)+1; % Index of driver behind
-end
+drivers.x = (d/ndrivers)*tracklength+randpos*randn(ndrivers,1); % Initial position
+drivers.v = defaultv+randvel*randn(ndrivers,1); % Initial velocity
+drivers.alert = ndriversones; % Alert vs. fucked
+drivers.realhead = ndriversones*tracklength/ndrivers; % Amount of distance to car in front
+drivers.perchead = ndriversones*tracklength/ndrivers; % Amount of distance to car in front
+drivers.percv = 0*ndriversones; % Perceived velocity
+drivers.percvdiff = 0*ndriversones; % Perceived velocity difference
+drivers.infront = mod(1:ndrivers,ndrivers)+1; % Index of driver in front
+drivers.behind = mod((1:ndrivers)-2,ndrivers)+1; % Index of driver behind
 
 
 
@@ -157,7 +155,7 @@ for t = 1:npts
                 end
             end
             
-            if drivers(d).alert = =  1,
+            if drivers(d).alert==1,
                 drivers(d).percv = velocities(d,t-tau-1); % Update perceived velocity if driver is alert
                 drivers(d).perchead = mod(diff(positions([d drivers(d).infront],t-tau-1)),tracklength); % Update perceived headway if driver is alert
                 drivers(d).percvdiff = diff(velocities([drivers(d).infront d],t-tau-1)); % Update perceived velocity difference if driver is alert
