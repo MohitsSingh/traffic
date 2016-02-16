@@ -8,7 +8,7 @@
 tic
 disp('Setting parameters...')
 % General code stuff
-rng(1) % Random number seed
+rng(3) % Random number seed
 doplot = 1; % Toggle whether to plot
 
 % Boring initialization stuff
@@ -24,10 +24,10 @@ whichmodel = 4;
 useawake = 0;
 ndrivers = 2; % Number kof drivers
 tracklength = 300; % Track length in meters
-defaultv = 0; % Default velocity in m/s
+defaultv = 10; % Default velocity in m/s
 tau = round(0.0/dt); % Reaction time (in number of timesteps)
-randvel = 250; % Randomness in initial velocity in m/s
-randpos = 250; % Randomness in initial positions in m
+randvel = 5; % Randomness in initial velocity in m/s
+randpos = 5; % Randomness in initial positions in m
 
 
 %% Markov process parameters
@@ -112,7 +112,7 @@ switch whichmodel
         
         sfunc = @(v) d+T*v;
         V = @(s,v) v0*(1-exp(-(s-sfunc(v))/R));
-        Theta = @(deltav) deltav>0;
+        Theta = @(deltav) deltav<0;
 %         dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff).*exp(-(perchead-s(percv))/Rprime);
 %         dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff).*exp(-(perchead-s(percv))/Rprime);
         
