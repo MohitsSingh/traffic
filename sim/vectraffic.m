@@ -8,12 +8,12 @@
 tic
 disp('Setting parameters...')
 % General code stuff
-rng(239487) % Random number seed
+rng(1) % Random number seed
 doplot = 1; % Toggle whether to plot
 
 % Boring initialization stuff
 ncollisions = 0; % Initialize number of collisions
-maxtime = 100; % Number of seconds to simulate
+maxtime = 20; % Number of seconds to simulate
 dx = 0.1; % Spatial step for calculating look-up table
 dt = 0.01; % Timestep size in seconds
 npts = maxtime/dt;
@@ -22,12 +22,12 @@ time = dt:dt:maxtime;
 % Model parameters
 whichmodel = 4;
 useawake = 0;
-ndrivers = 20; % Number kof drivers
+ndrivers = 2; % Number kof drivers
 tracklength = 300; % Track length in meters
 defaultv = 0; % Default velocity in m/s
 tau = round(0.0/dt); % Reaction time (in number of timesteps)
-randvel = 0; % Randomness in initial velocity in m/s
-randpos = 0; % Randomness in initial positions in m
+randvel = 250; % Randomness in initial velocity in m/s
+randpos = 250; % Randomness in initial positions in m
 
 
 %% Markov process parameters
@@ -101,16 +101,22 @@ switch whichmodel
     %% Generalized Force Model
     case 4
         alpha = 1/2.45; % Responsivity rate in /s
-        vmax = 16.98; % ?? Maximum velocity ish?
+        v0 = 16.98; % ?? Maximum velocity ish?
         d = 1.38; % Minimum vehicle distance in m
         T = 0.74; % Safe time headway in s
         alphaprime = 1/0.77; % Braking rate in s
         R = 5.59; % ?? in m
         Rprime = 98.78; % Braking interaction distance in m
+        ztau = 2.45; % Responsivity in s
+        ztauprime = 0.77; % Braking rate in s
         
-        s = @(percv) d+T*percv;
-        V = @(perchead,percv) vmax*(1-exp(-(perchead-s(percv))/R));
-        dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff).*exp(-(perchead-s(percv))/Rprime);
+        sfunc = @(v) d+T*v;
+        V = @(s,v) v0*(1-exp(-(s-sfunc(v))/R));
+        Theta = @(deltav) deltav>0;
+%         dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff).*exp(-(perchead-s(percv))/Rprime);
+%         dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff).*exp(-(perchead-s(percv))/Rprime);
+        
+        dvdt = @(s,v,deltav) dt*( (V(s,v) - v0)/ztau - deltav.*Theta(deltav)/ztauprime .* exp(-(s-sfunc(v))/Rprime) );
         
         
     %% Underwood Model
