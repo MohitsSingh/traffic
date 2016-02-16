@@ -116,7 +116,7 @@ switch whichmodel
 %         dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff).*exp(-(perchead-s(percv))/Rprime);
 %         dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff).*exp(-(perchead-s(percv))/Rprime);
         
-        dvdt = @(s,v,deltav) dt*( (V(s,v) - v0)/ztau - deltav.*Theta(deltav)/ztauprime .* exp(-(s-sfunc(v))/Rprime) );
+        dvdt = @(s,v,deltav) dt*( (v0-v)/ztau + (V(s,v) - v0)/ztau - deltav.*Theta(deltav)/ztauprime .* exp(-(s-sfunc(v))/Rprime) );
         
         
     %% Underwood Model
