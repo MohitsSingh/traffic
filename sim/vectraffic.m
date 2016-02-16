@@ -13,7 +13,7 @@ doplot = 1; % Toggle whether to plot
 
 % Boring initialization stuff
 ncollisions = 0; % Initialize number of collisions
-maxtime = 20; % Number of seconds to simulate
+maxtime = 100; % Number of seconds to simulate
 dx = 0.1; % Spatial step for calculating look-up table
 dt = 0.01; % Timestep size in seconds
 npts = maxtime/dt;
@@ -22,8 +22,8 @@ time = dt:dt:maxtime;
 % Model parameters
 whichmodel = 4;
 useawake = 0;
-ndrivers = 2; % Number kof drivers
-tracklength = 300; % Track length in meters
+ndrivers = 5; % Number kof drivers
+tracklength = 500; % Track length in meters
 defaultv = 10; % Default velocity in m/s
 tau = round(0.0/dt); % Reaction time (in number of timesteps)
 randvel = 5; % Randomness in initial velocity in m/s
@@ -112,7 +112,7 @@ switch whichmodel
         
         sfunc = @(v) d+T*v;
         V = @(s,v) v0*(1-exp(-(s-sfunc(v))/R));
-        Theta = @(deltav) deltav<0;
+        Theta = @(deltav) deltav>=0;
 %         dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff).*exp(-(perchead-s(percv))/Rprime);
 %         dvdt = @(perchead,percv,percvdiff) alpha*dt*(vmax - percv + V(perchead,percv)-vmax) - alphaprime*dt*max(0,percvdiff).*exp(-(perchead-s(percv))/Rprime);
         
